@@ -14,12 +14,18 @@ router.get('/',function(req,res,next){
 })
 
 router.get('/:id',function(req,res,next){
-	//Get specific day
+	Day.find({number: req.params.id}).exec()
+	.then(function(day){
+		console.log("Test")
+		res.json(day);
+	}).then(null,next);
 })
 
 
 router.delete('/:id',function(req,res,next){
-	//Delete specific day
+	Day.remove({number: req.params.id})
+	.then(console.log)
+	.then(null,next)
 })
 
 

@@ -170,12 +170,18 @@ $(function () {
     $addDayButton.on('click', function () {
 
         var currentNumOfDays = days.length;
-        var $newDayButton = createDayButton(currentNumOfDays + 1);
+        $.post('/api/day/'+currentNumOfDays)
+        .done(function(data) {
+            console.log(data);
+            var $newDayButton = createDayButton(currentNumOfDays + 1);
 
-        $addDayButton.before($newDayButton);
-        days.push([]);
-        setDayButtons();
-        setDay(currentNumOfDays + 1);
+            $addDayButton.before($newDayButton);
+            days.push([]);
+            setDayButtons();
+            setDay(currentNumOfDays + 1);
+        })
+        .fail(console.log);
+        
 
     });
 
@@ -185,5 +191,35 @@ $(function () {
 
     });
 
+    $.ajax({
+        method: 'GET',
+        url: '/api/day',
+        success: function(dayArray) {
+            // dayArray.forEach(function(day,i) {
+            //     if(i !== 0) {
+            //         days.push([]);
+            //     }
+
+            //     var placeObj;
+            //     var marker;
+            //     var section;
+            //     day[activities].forEach(function(activityId) {
+            //         var activityName = all_activities.filter(function(activity) {
+            //             return activity._id === activityId;
+            //         })[0].name;
+            //         placeObj = getPlaceObject()
+            //     });
+            //     day[restaurants].forEach(function() {
+
+            //     });
+
+            //     days[i].push({place: placeObj, marker: createdMapMarker, section: sectionName});
+            // })
+            console.log(dayArray);
+        },
+        error: function(err) {
+            console.error(err);
+        }
+    });
 });
 

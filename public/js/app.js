@@ -81,12 +81,19 @@ $(function () {
 
         if (days.length === 1) return;
 
-        reset();
-
-        days.splice(dayNum - 1, 1);
-
-        setDayButtons();
-        setDay(1);
+        $.ajax({
+            method: 'DELETE',
+            url: '/api/day/'+currentDay,
+            success: function(data){
+                reset();
+                days.splice(dayNum - 1, 1);
+                setDayButtons();
+                setDay(1);
+            },
+             error: function(err) {
+            console.error("This is the error: ",err);
+            }
+        })
 
     };
 
@@ -136,17 +143,21 @@ $(function () {
         var sectionName = $this.parent().attr('id').split('-')[0];
         var $listToAppendTo = $('#' + sectionName + '-list').find('ul');
         var placeName = $this.siblings('select').val();
-        var placeObj = getPlaceObject(sectionName, placeName);
+        
+        $.post('/api/day/'+currentDay+'/'+sectionName+'/'+placeName)
+        .done(function(data){
+            var placeObj = getPlaceObject(sectionName, placeName);
+            var createdMapMarker = drawLocation(map, placeObj.place[0].location, {
+                icon: placeMapIcons[sectionName]
+            });
+            days[currentDay - 1].push({place: placeObj, marker: createdMapMarker, section: sectionName});
+            $listToAppendTo.append(createItineraryItem(placeName));
 
-        var createdMapMarker = drawLocation(map, placeObj.place[0].location, {
-            icon: placeMapIcons[sectionName]
-        });
+            mapFit();
+        
+        }).fail(console.log);
 
-        days[currentDay - 1].push({place: placeObj, marker: createdMapMarker, section: sectionName});
-        $listToAppendTo.append(createItineraryItem(placeName));
-
-        mapFit();
-
+        
     });
 
     $placeLists.on('click', '.remove', function (e) {
@@ -154,12 +165,23 @@ $(function () {
         var $this = $(this);
         var $listItem = $this.parent().parent();
         var nameOfPlace = $this.siblings('span').text();
-        var indexOfThisPlaceInDay = getIndexOfPlace(nameOfPlace, days[currentDay - 1]);
-        var placeInDay = days[currentDay - 1][indexOfThisPlaceInDay];
+        var sectionName = $this.parent().parent().closest('div').attr('id').split('-')[0];
+            
+        $.ajax({
+            method: 'DELETE',
+            url: '/api/day/'+currentDay+'/'+sectionName+'/'+nameOfPlace,
+            success: function(data){
+                console.log(data);
+                var indexOfThisPlaceInDay = getIndexOfPlace(nameOfPlace, days[currentDay - 1]);
+                var placeInDay = days[currentDay - 1][indexOfThisPlaceInDay];
 
-        placeInDay.marker.setMap(null);
-        days[currentDay - 1].splice(indexOfThisPlaceInDay, 1);
-        $listItem.remove();
+                placeInDay.marker.setMap(null);
+                days[currentDay - 1].splice(indexOfThisPlaceInDay, 1);
+                $listItem.remove();
+            }
+        })
+
+       
 
     });
 
@@ -170,7 +192,7 @@ $(function () {
     $addDayButton.on('click', function () {
 
         var currentNumOfDays = days.length;
-        $.post('/api/day/'+currentNumOfDays)
+        $.post('/api/day/'+parseInt(currentNumOfDays+1).toString())
         .done(function(data) {
             console.log(data);
             var $newDayButton = createDayButton(currentNumOfDays + 1);
@@ -190,7 +212,11 @@ $(function () {
         removeDay(currentDay);
 
     });
+   
 
+    
+
+    
     $.ajax({
         method: 'GET',
         url: '/api/day',
